@@ -8,8 +8,8 @@ systemctl enable --now docker
 systemctl enable --now amazon-ssm-agent
 usermod -aG docker ec2-user
 
-mkdir -p /opt/app
-cd /opt/app
+mkdir -p /opt/app/repo/docker
+cd /opt/app/repo/docker
 
 # Clona o repositório da variável
 git clone --branch ${REPO_BRANCH} --depth 1 ${REPO_URL} repo
