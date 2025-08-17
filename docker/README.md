@@ -20,8 +20,3 @@ Este laboratório provisiona infraestrutura AWS com Terraform e roda um containe
 1. Completar os arquivos Terraform (VPC/Security Group/EC2).
 2. Criar Dockerfile e publicar imagem (opcional) ou build local.
 3. Subir Nginx e validar página de boas-vindas.
-
-## Contruir rodar a Imagem Docker
-
-docker build -t lab1-nginx ./docker
-docker run -d -p 8080:80 lab1-nginx
