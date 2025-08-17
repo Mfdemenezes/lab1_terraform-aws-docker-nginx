@@ -1,21 +1,30 @@
 #!/bin/bash
-set -xe
+set -euxo pipefail
 
+# Atualiza pacotes
 dnf update -y
-dnf install -y git docker
 
-systemctl enable --now docker
-systemctl enable --now amazon-ssm-agent
+# Instala Docker e Git
+dnf install -y docker git
+
+# Inicia e habilita Docker
+systemctl enable docker
+systemctl start docker
+
+# Adiciona ec2-user ao grupo docker
 usermod -aG docker ec2-user
 
-mkdir -p /opt/app/repo/docker
-cd /opt/app/repo/docker
+# Clona o repositório (HTTPS para evitar chave SSH)
+rm -rf /opt/app
+mkdir -p /opt/app
+git clone --branch ${REPO_BRANCH} --depth 1 ${REPO_URL} /opt/app/repo
 
-# Clona o repositório da variável
-git clone --branch ${REPO_BRANCH} --depth 1 ${REPO_URL} repo
-cd repo
-
-# Builda e sobe o container
+# Faz build da imagem a partir do Dockerfile dentro da pasta docker
+cd /opt/app/repo
 docker build -t ${IMAGE_NAME} -f ${DOCKERFILE_PATH} .
+
+# Remove container antigo se existir
 docker rm -f web || true
+
+# Sobe o container na porta 80
 docker run -d --name web --restart unless-stopped -p 80:80 ${IMAGE_NAME}
