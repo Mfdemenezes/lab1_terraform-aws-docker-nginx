@@ -3,6 +3,14 @@
 #########################################
 
 # Projeto
+# Região da AWS
+variable "region" {
+  description = "Região AWS para criar os recursos"
+  type        = string
+  default     = "us-east-1"
+}
+
+
 variable "project" {
   description = "Nome do projeto"
   type        = string
