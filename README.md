@@ -1,11 +1,22 @@
-# lab_terraform-aws-docker-nginx
+# Lab 1 — Terraform + AWS + Docker + Nginx
 
-Objetivo: Provisionar EC2 com Terraform, instalar Docker via user_data e subir NGINX.
+Este laboratório provisiona infraestrutura AWS com Terraform e roda um container Nginx via Docker.
 
-Adicionar no terraform-aws-docker-nginx/README.md (seção “Arquitetura”):
+## Estrutura
 
-flowchart LR
-    Dev[Terraform] --> EC2[(AWS EC2)]
-    EC2 --> Docker
-    Docker --> NGINX
-    User((Usuário)) -->|HTTP 80| NGINX
+- `terraform/` — códigos IaC para provisionar rede/EC2/security groups
+- `docker/` — Dockerfile e recursos do container
+- `nginx/` — configs do Nginx (ex.: `default.conf`)
+
+## Pré-requisitos
+
+- Git + chave SSH configurada no GitHub
+- Terraform >= 1.6
+- AWS CLI configurado (`aws configure`)
+- Docker instalado
+
+## Próximos passos
+
+1. Completar os arquivos Terraform (VPC/Security Group/EC2).
+2. Criar Dockerfile e publicar imagem (opcional) ou build local.
+3. Subir Nginx e validar página de boas-vindas.
