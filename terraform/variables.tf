@@ -1,63 +1,69 @@
+#########################################
+# Variables Terraform
+#########################################
+
+# Projeto
 variable "project" {
-  description = "Project name."
+  description = "Nome do projeto"
   type        = string
-  default     = "lab1-terraform-aws-docker-nginx"
+  default     = "lab1"
 }
 
-variable "region" {
-  description = "AWS region."
-  type        = string
-  default     = "us-east-1"
-}
-
+# Tipo da instância EC2
 variable "instance_type" {
-  description = "EC2 instance type."
+  description = "Tipo da instância EC2"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.micro"
 }
 
+# Tags padrão
+variable "tags" {
+  description = "Tags adicionais"
+  type        = map(string)
+  default = {
+    Environment = "dev"
+    Terraform   = "true"
+  }
+}
+
+# Libera SSH? (true/false)
 variable "enable_ssh" {
-  description = "If true, opens port 22 for SSH."
+  description = "Se true, libera porta 22 para SSH"
   type        = bool
   default     = false
 }
 
+# CIDR de origem para SSH
 variable "ssh_ingress_cidr" {
-  description = "CIDR allowed for SSH when enable_ssh=true."
+  description = "CIDR para acesso SSH (se enable_ssh=true)"
   type        = string
   default     = "0.0.0.0/0"
 }
 
-# Repo -> build -> run
+# URL do repositório Git
 variable "repo_url" {
-  description = "Git repository URL to clone on EC2."
+  description = "URL do repositório Git"
   type        = string
   default     = "https://github.com/Mfdemenezes/lab1_terraform-aws-docker-nginx.git"
 }
 
+# Branch do repositório
 variable "repo_branch" {
-  description = "Repository branch."
+  description = "Branch do repositório"
   type        = string
   default     = "main"
 }
 
+# Caminho do Dockerfile dentro do repositório
 variable "dockerfile_path" {
-  description = "Dockerfile path relative to repo root."
+  description = "Caminho do Dockerfile dentro do repositório"
   type        = string
   default     = "docker/Dockerfile"
 }
 
+# Nome da imagem Docker
 variable "image_name" {
-  description = "Local image name to build on EC2."
+  description = "Nome da imagem Docker a ser construída"
   type        = string
   default     = "lab1-nginx"
-}
-
-variable "tags" {
-  description = "Default resource tags."
-  type        = map(string)
-  default = {
-    Owner   = "Mfdemenezes"
-    Project = "lab1-terraform-aws-docker-nginx"
-  }
 }
