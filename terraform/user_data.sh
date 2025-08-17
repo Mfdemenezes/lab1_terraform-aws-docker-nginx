@@ -1,38 +1,36 @@
-terraform/user_data.sh
 #!/bin/bash
 set -euxo pipefail
 
-# Atualiza e instala Docker
-dnf update -y
-dnf install -y docker
+# Variáveis injetadas pelo Terraform
+REPO_URL="${REPO_URL}"
+REPO_BRANCH="${REPO_BRANCH}"
+DOCKERFILE_PATH="${DOCKERFILE_PATH}"
+IMAGE_NAME="${IMAGE_NAME}"
 
-# (Opcional mas recomendado) SSM Agent - em AL2023 geralmente já vem instalado,
-# mas garantimos e ativamos:
+# Atualiza sistema e instala pacotes
+dnf update -y
+dnf install -y git docker
 dnf install -y amazon-ssm-agent || true
 systemctl enable --now amazon-ssm-agent
 
-# Sobe Docker liberando usuario ec2-user
+# Inicia Docker
 systemctl enable --now docker
 usermod -aG docker ec2-user || true
 
-# Conteúdo HTML simples
-mkdir -p /opt/nginx/html
-cat > /opt/nginx/html/index.html <<'HTML'
-<!doctype html>
-<html lang="pt-br">
-<head><meta charset="utf-8"><title>Lab 1 — Nginx via Docker</title></head>
-<body style="font-family: system-ui; margin: 3rem;">
-  <h1>🚀 Lab 1 — Terraform + AWS + Docker + Nginx</h1>
-  <p>Instância criada com Terraform, Nginx rodando em container Docker. 🎉</p>
-</body>
-</html>
-HTML
+# Clona repositório
+install -d -m 0755 /opt/app
+cd /opt/app
+if [ ! -d repo ]; then
+  git clone --branch "${REPO_BRANCH}" --depth 1 "${REPO_URL}" repo
+fi
+cd repo
 
-# Baixa e roda Nginx em container
-docker pull nginx:alpine
+# Build da imagem (contexto = raiz do repositório)
+docker build -t "${IMAGE_NAME}" -f "${DOCKERFILE_PATH}" .
+
+# Sobe o container
 docker rm -f web || true
 docker run -d --name web \
   --restart unless-stopped \
   -p 80:80 \
-  -v /opt/nginx/html:/usr/share/nginx/html:ro \
-  nginx:alpine
+  "${IMAGE_NAME}"

@@ -1,15 +1,14 @@
 locals {
   name      = var.project
-  # Pega uma subnet do Default VPC
   subnet_id = data.aws_subnets.default.ids[0]
 }
 
-# AMI Amazon Linux 2023 via SSM
+# AMI Amazon Linux 2023 (x86_64) via SSM
 data "aws_ssm_parameter" "al2023" {
   name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
 }
 
-# Default VPC e subnets
+# Default VPC and subnets
 data "aws_vpc" "default" {
   default = true
 }
@@ -21,13 +20,12 @@ data "aws_subnets" "default" {
   }
 }
 
-# SG básico: HTTP aberto; SSH opcional
+# Security Group (HTTP open; optional SSH)
 resource "aws_security_group" "web" {
   name        = "${local.name}-sg"
-  description = "SG para HTTP (e SSH opcional)"
+  description = "SG for HTTP (optional SSH)"
   vpc_id      = data.aws_vpc.default.id
-
-  tags = merge(var.tags, { Name = "${local.name}-sg" })
+  tags        = merge(var.tags, { Name = "${local.name}-sg" })
 }
 
 resource "aws_vpc_security_group_ingress_rule" "http" {
@@ -46,17 +44,17 @@ resource "aws_vpc_security_group_ingress_rule" "ssh" {
   from_port         = 22
   to_port           = 22
   ip_protocol       = "tcp"
-  description       = "SSH opcional"
+  description       = "SSH optional"
 }
 
 resource "aws_vpc_security_group_egress_rule" "all" {
   security_group_id = aws_security_group.web.id
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "-1"
-  description       = "Saída liberada"
+  description       = "All outbound"
 }
 
-# IAM p/ SSM (acesso via Session Manager, sem SSH)
+# IAM for SSM (Session Manager)
 data "aws_iam_policy_document" "ec2_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -83,27 +81,40 @@ resource "aws_iam_instance_profile" "ssm" {
   role = aws_iam_role.ssm.name
 }
 
-# EC2 com user_data que CLONA O REPO, BUILDA e RODA sua imagem
+# EC2 instance (build & run your Docker image on boot)
 resource "aws_instance" "web" {
   ami                         = data.aws_ssm_parameter.al2023.value
   instance_type               = var.instance_type
   subnet_id                   = local.subnet_id
   associate_public_ip_address = true
 
+  # Root disk (EBS)
+  root_block_device {
+    volume_size = 12
+    volume_type = "gp3"
+  }
+
   iam_instance_profile   = aws_iam_instance_profile.ssm.name
   vpc_security_group_ids = [aws_security_group.web.id]
 
-  # >>> AQUI O PULO DO GATO: usa templatefile para passar as variáveis ao user_data.sh
   user_data = templatefile("${path.module}/user_data.sh", {
     REPO_URL        = var.repo_url
     REPO_BRANCH     = var.repo_branch
     DOCKERFILE_PATH = var.dockerfile_path
     IMAGE_NAME      = var.image_name
   })
+  user_data_replace_on_change = true
 
   metadata_options {
     http_tokens = "required"
   }
 
   tags = merge(var.tags, { Name = "${local.name}-ec2" })
+}
+
+# Elastic IP always attached to the instance
+resource "aws_eip" "web" {
+  instance = aws_instance.web.id
+  domain   = "vpc"
+  tags     = merge(var.tags, { Name = "${local.name}-eip" })
 }

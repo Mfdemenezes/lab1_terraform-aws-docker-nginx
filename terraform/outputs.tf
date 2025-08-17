@@ -1,19 +1,14 @@
 output "instance_id" {
-  description = "ID da instância EC2"
+  description = "EC2 instance ID"
   value       = aws_instance.web.id
 }
 
 output "public_ip" {
-  description = "IP público"
-  value       = aws_instance.web.public_ip
-}
-
-output "public_dns" {
-  description = "DNS público"
-  value       = aws_instance.web.public_dns
+  description = "Elastic IP attached to the instance"
+  value       = aws_eip.web.public_ip
 }
 
 output "http_url" {
-  description = "URL HTTP"
-  value       = "http://${aws_instance.web.public_ip}"
+  description = "HTTP URL of the application"
+  value       = "http://${aws_eip.web.public_ip}"
 }
